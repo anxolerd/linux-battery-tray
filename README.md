@@ -1,7 +1,7 @@
 # linux-battery-tray
 A system tray battery indicator
 
-##Requirements
+####Requirements
 - Python 2.7
 - pygtk
 - egg-python
