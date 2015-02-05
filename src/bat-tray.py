@@ -26,6 +26,7 @@ class UpdateTimer:
         gobject.timeout_add_seconds(timeout, self.timer_callback)
         self.timer_callback()
 
+
     def timer_callback(self):
 
         if not self.bat_present:
@@ -33,7 +34,9 @@ class UpdateTimer:
             # todo stop timer if possible
             return True
 
-        out = ' <span color="#'
+        #out = ' <span color="#'
+
+        template_bat = ' <span color="{0}">Bat:</span> <span color="#cfd8dc">{1}{2}</span>'
 
         with open(self.path_energy_now, "r") as f:
             energy_now = int(f.read())
@@ -51,21 +54,27 @@ class UpdateTimer:
             f.closed
 
         if not status:
-            out += 'ffeb3b">Bat:</span> '
+            color = '#ffeb3b'
         elif status == "Charging\n":
-            out += '00ff00">Bat:</span> '
+            color = '#00ff00'
         elif status == "Discharging\n":
-            out += 'ff0000">Bat:</span> '
+            color = '#ff0000'
         elif status == "Full\n":  
-            out += '00ff00">Bat: Full</span>'
+            color = '#00ff00'
         else:
             # in my case it's "Unknown" but actually it is "Charging"
-            out += '00ff00">Bat:</span> '
+            color = '#00ff00'
+        
+        time_str = ""
+        percentage_str = ""
 
-        if status != "Full\n":
+        if status == "Full\n":
+            percentage_str = "Full"
+        else:
             percentage = round(100.0 * energy_now / energy_full)
             percentage = int(percentage)
-            out += '<span color="#cfd8dc">' + str(percentage) + '%'            
+            percentage_str = '{0}%'.format(percentage)            
+
             if self.path_current_now:
                 with open(self.path_current_now, "r") as f:
                     current_now = int(f.read())
@@ -82,25 +91,29 @@ class UpdateTimer:
                     seconds = None
 
                 if (seconds):
+                    time_template = '{0}:{1}'
                     hours = int(seconds / 3600)
                     seconds -= 3600 * hours
                     minutes = int(seconds / 60)
                     seconds -= 60 * minutes
                     
                     if (hours < 10):
-                        out += ' 0' + str(hours) + ':'
+                        h = ' 0' + str(hours)
                     else:
-                        out += ' ' + str(hours) + ':'
+                        h = ' ' + str(hours)
                     if (minutes < 10):
-                        out += '0' + str(minutes)
+                        m = '0' + str(minutes)
                     else:
-                        out += str(minutes)
-            out+='</span>'
+                        m = str(minutes)
 
+                    time_str = time_template.format(h,m)
+
+        out = template_bat.format(color, percentage_str, time_str);
         self.label.set_markup(out)
+
         return True
     
-    def lookup_battery(self):       
+    def lookup_battery(self):
         bat_present = False
         path = "/sys/class/power_supply/"
         dirs = os.listdir(path)
